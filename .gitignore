@@ -1,0 +1,30 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# ---- Virtual Environment ----
+venv/
+.env/
+
+# ---- Jupyter Notebook ----
+.ipynb_checkpoints/
+
+# ---- Data files ----
+data/raw/
+data/processed/
+
+# (opcional: caso não queira subir os dados no Git)
+# data/*
+
+# ---- Logs ----
+*.log
+
+# ---- VSCode ----
+.vscode/
+
+# ---- System files ----
+.DS_Store
+Thumbs.db
