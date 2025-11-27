@@ -146,6 +146,3 @@ Serão implementados:
 **Próxima etapa:** Treinamento dos modelos de Machine Learning
 
 ---
-
-Se quiser, posso gerar uma **versão ainda mais profissional** com badges e tabela de métricas.
-Quer que eu evolua o README nesse estilo?
