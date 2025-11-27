@@ -30,7 +30,7 @@ def balance_data_smote(X_train, y_train):
 resultantes do pré-processamento em formato `.npy`. Isso permite que o modelo
 de ML carregue os dados rapidamente sem repetir todo o pipeline.'''
 
-def save_processed(X_train_bal, X_test, y_train_bal, y_test, base_path="data/processed"):
+def save_processed(X_train_bal, X_test, y_train_bal, y_test, base_path="data/processed/"):
     # Criar a pasta se não existir
     os.makedirs(base_path, exist_ok=True)
     
@@ -54,32 +54,38 @@ def save_processed(X_train_bal, X_test, y_train_bal, y_test, base_path="data/pro
 
 def preprocess_pipeline():
     print("🚀 Iniciando pipeline de pré-processamento...")
-    
-    # 1 — Carregar os dados
-    df = load_data()
+
+    # 1 — Carregar os dados (AGORA CERTO)
+    df = load_data("data/raw/creditcard.csv")
     print("✔ Dados carregados:", df.shape)
-    
+
     # 2 — Separar X e y
     X = df.drop("Class", axis=1)
     y = df["Class"]
     print("✔ X e y separados")
-    
-    # 3 — Dividir em treino/teste
-    X_train, X_test, y_train, y_test = split_data(X, y)
+
+    # 3 — Dividir em treino/teste (NOME DA FUNÇÃO CORRIGIDO)
+    X_train, X_test, y_train, y_test = train_test_split_custom(X, y)
     print("✔ Dados divididos em treino/teste")
-    
-    # 4 — Escalar
-    X_train_scaled, X_test_scaled = scale_data(X_train, X_test)
+
+    # 4 — Escalar (NOME DA FUNÇÃO CORRIGIDO)
+    X_train_scaled, X_test_scaled = scale_features(X_train, X_test)
     print("✔ Dados escalados")
-    
+
     # 5 — Balancear com SMOTE
     X_train_bal, y_train_bal = balance_data_smote(X_train_scaled, y_train)
     print("✔ Dados balanceados com SMOTE")
-    
-    # 6 — Salvar tudo
-    save_processed(X_train_bal, X_test_scaled, y_train_bal, y_test)
-    
-    # 7 — Retornar shapes para debug
+
+    # 6 — Salvar tudo (CAMINHO RELATIVO)
+    save_processed(
+        X_train_bal, 
+        X_test_scaled, 
+        y_train_bal, 
+        y_test, 
+        base_path="data/processed"
+    )
+
+    # 7 — Retornar shapes
     print("\n📐 Shapes finais:")
     print("X_train_bal:", X_train_bal.shape)
     print("y_train_bal:", y_train_bal.shape)
@@ -92,3 +98,7 @@ def preprocess_pipeline():
         "X_test": X_test_scaled.shape,
         "y_test": y_test.shape
     }
+
+if __name__ == "__main__":
+    print("Iniciando pipeline...")
+    preprocess_pipeline()
