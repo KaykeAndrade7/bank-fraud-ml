@@ -2,81 +2,91 @@
 
 ### Previsão de transações bancárias fraudulentas usando aprendizado de máquina
 
-Este projeto constrói um pipeline completo para **detectar fraudes em cartões de crédito**, utilizando o dataset real “Credit Card Fraud Detection” do Kaggle.
-O foco é desenvolver um modelo robusto, escalável e aplicável a cenários reais de análise bancária.
+Este projeto implementa um pipeline completo para **detecção de fraudes em cartões de crédito**, utilizando o dataset real *Credit Card Fraud Detection* do Kaggle.
+O foco é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário.
 
 ---
 
 ## 📊 Dataset
 
 **Fonte:** Kaggle — *Credit Card Fraud Detection*
-Link: [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
-**Observações principais:**
+**Link:** [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+
+### **Características principais:**
 
 * 284.807 transações
-* Apenas **0.17%** são fraudulentas → *problema severo de desbalanceamento*
-* Variáveis V1–V28 foram reduzidas por PCA (dados anonimizados)
-* A coluna **Class** é a variável-alvo
+* Apenas **0,17%** são fraudulentas → *problema severamente desbalanceado*
+* Features V1–V28 geradas por PCA (dados anonimizados)
+* Coluna **Class** é a variável-alvo:
 
   * `0` → transação normal
-  * `1` → fraude
+  * `1` → transação fraudulenta
 
 ---
 
 ## 🔍 Exploratory Data Analysis (EDA)
 
-Principais análises realizadas:
+### ✔ Distribuição das classes
 
-### ✔️ Distribuições
+* Fraude representa menos de 1% das transações.
+* Indica necessidade de reamostragem (SMOTE).
 
-* Fraude representa menos de 1% → extremamente desbalanceado.
-* Features PCA (V1–V28) apresentam distribuição centrada e comportamento diferente entre fraudes e não fraudes.
+### ✔ Análise das features
 
-### ✔️ Correlação
+* Variáveis PCA (V1–V28) possuem padrões diferentes entre fraudes e não fraudes.
+* Variável `Amount` apresenta cauda longa e alta variabilidade.
 
-* Forte correlação negativa entre **V17, V14, V12** e a classe (fraude).
-* Isso indica que algumas componentes PCA carregam sinal importante.
+### ✔ Correlação
 
-### ✔️ Outliers
+* Componentes **V17, V14 e V12** mostram forte relação com a classe fraudulenta.
+* Algumas componentes PCA carregam alto poder discriminativo.
 
-* Algumas variáveis possuem valores extremos, mas fazem sentido para dados PCA e não foram removidos.
+### ✔ Outliers
 
-### ✔️ Gráficos utilizados
+* Presentes, mas esperados em dados transformados por PCA.
+* Mantidos no conjunto.
+
+### ✔ Gráficos utilizados
 
 * Histogramas por classe
 * Heatmap de correlação
-* Countplot de fraudes
-* Boxplots comparativos
+* Countplot das classes
+* Boxplots de variáveis importantes
 
 ---
 
 ## 🧹 Pré-processamento
 
-### Passos implementados:
+O pré-processamento foi implementado em `src/preprocessing.py` dentro de um pipeline automatizado.
 
-### ✔️ 1. Separação X / y
+### ✔ 1. Separação X / y
 
-* `Class` é a coluna alvo
-* Todas as demais variáveis → features
+* `Class` é a variável-alvo.
+* Demais colunas são features.
 
-### ✔️ 2. Train-test split
+### ✔ 2. Train-test split (80/20)
 
-* Proporção 80/20
-* Estratificado (mantém proporção de fraudes)
+* Divisão estratificada para preservar proporção de fraudes.
 
-### ✔️ 3. Normalização (StandardScaler)
+### ✔ 3. Normalização (StandardScaler)
 
-* Aplicado **apenas no treino**
-* Transformação posteriormente aplicada ao teste
+* Ajustado **somente no conjunto de treino**.
+* Aplicado no teste para evitar *data leakage*.
+* Scaler salvo em:
 
-### ✔️ 4. Balanceamento SMOTE
+```
+models/scaler.pkl
+```
 
-O SMOTE (*Synthetic Minority Oversampling Technique*) gera novos exemplos sintéticos da classe minoritária.
-Aplicamos **somente no conjunto de treino**, evitando vazamento de informação.
+### ✔ 4. Balanceamento com SMOTE
 
-### ✔️ 5. Salvamento dos arquivos processados
+* Aplicado apenas no treino.
+* Aumenta a classe minoritária de forma sintética.
+* Melhora o aprendizado em datasets desbalanceados.
 
-Todos os arrays são salvos em:
+### ✔ 5. Salvamento dos dados processados
+
+Arquivos gerados:
 
 ```
 data/processed/
@@ -86,49 +96,69 @@ data/processed/
   ├── y_test.npy
 ```
 
-### ✔️ 6. Pipeline completo implementado
+### ✔ 6. Pipeline completo (`preprocess_pipeline()`)
 
-Função: **preprocess_pipeline()**
+Fluxo implementado:
 
-Ela executa:
-
-1. Carregar dados
-2. Separar X/y
-3. Dividir treino/teste
-4. Escalar
-5. Balancear
-6. Salvar arrays
-7. Retornar formas (debug)
+1. Carrega os dados
+2. Separa features e target
+3. Divide treino/teste
+4. Escala os dados
+5. Aplica SMOTE
+6. Salva scaler + arrays
+7. Retorna formas para validação
 
 ---
 
-## 🤖 Modelos (próximas etapas)
+## 🤖 Modelagem — Logistic Regression (Etapa finalizada)
 
-Serão implementados:
+O primeiro modelo treinado foi **Regressão Logística**, utilizando os dados pré-processados.
 
-### Machine Learning
+### 📊 Resultados Obtidos
 
-* Logistic Regression
+**ROC-AUC:** 0.9709
+**Recall:** 0.9183
+**Precision:** 0.0579
+
+### 📌 Matriz de Confusão
+
+|            | Previsto 0 | Previsto 1 |
+| ---------- | ---------- | ---------- |
+| **Real 0** | 55402      | 1462       |
+| **Real 1** | 8          | 90         |
+
+### 📝 Interpretação profissional
+
+* **ROC-AUC de 0.97** → excelente capacidade de separação.
+* **Recall = 91,8%** → modelo recupera a maioria das fraudes (prioridade do setor).
+* **Precisão baixa (5,7%)** → esperado em datasets extremamente desbalanceados.
+* **Apenas 8 fraudes não detectadas** → ótimo desempenho para aplicações reais.
+
+---
+
+## 🔮 Próximas Etapas (Dia 5 em diante)
+
+### Machine Learning:
+
 * Random Forest
 * Gradient Boosting
 * XGBoost / LightGBM
 
-### Métricas
+### Deep Learning:
 
-* ROC-AUC
-* Recall (prioridade)
-* Precision
-* Confusion Matrix
+* MLP (rede neural densa)
+* Early Stopping
+* Comparação com modelos tradicionais
 
-### Deep Learning (MLP)
+### Relatórios:
 
-* Rede neural densa
-* Early stopping
-* Comparação final com modelos clássicos
+* Tabelas comparativas de métricas
+* Gráficos de performance
+* Seleção de modelo final para produção
 
 ---
 
-## ⚙️ Tecnologias Utilizadas
+## ⚙ Tecnologias Utilizadas
 
 * Python 3.10+
 * Pandas / NumPy
@@ -136,13 +166,18 @@ Serão implementados:
 * Scikit-learn
 * Imbalanced-Learn (SMOTE)
 * TensorFlow (CPU)
+* Joblib
 * Jupyter Notebook
 
 ---
 
-## 📌 Status
+## 📌 Status Atual
 
-**Etapa atual:** Pré-processamento completo finalizado
-**Próxima etapa:** Treinamento dos modelos de Machine Learning
+**Etapa concluída:**
+✔ Pré-processamento completo
+✔ Treinamento e avaliação do modelo Logistic Regression
+
+**Próxima etapa:**
+➡ Treinar modelos avançados (Random Forest, Gradient Boosting)
 
 ---
