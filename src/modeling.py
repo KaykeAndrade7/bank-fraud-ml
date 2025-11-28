@@ -5,11 +5,16 @@ import joblib
 from sklearn.metrics import roc_auc_score,recall_score,precision_score,confusion_matrix
 
 def load_processed_data(base_path="data/processed/"):
-    os.path.join(base_path)
-    X_train = np.load('data/processed/X_train_bal.npy')
-    y_train = np.load('data/processed/y_train_bal.npy')
-    X_test = np.load('data/processed/X_test.npy')
-    y_test = np.load('data/processed/y_test.npy')
+
+    path_xtrain = os.path.join(base_path, "X_train_bal.npy")
+    path_ytrain = os.path.join(base_path, "y_train_bal.npy")
+    path_xtest  = os.path.join(base_path, "X_test.npy")
+    path_ytest  = os.path.join(base_path, "y_test.npy")
+
+    X_train = np.load(path_xtrain)
+    y_train = np.load(path_ytrain)
+    X_test  = np.load(path_xtest)
+    y_test  = np.load(path_ytest)
     
     return X_train, y_train, X_test, y_test
 

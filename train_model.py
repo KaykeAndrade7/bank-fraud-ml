@@ -10,6 +10,7 @@ def main():
 
     # Avaliar o modelo
     metrics = evaluate_model(model, X_test, y_test)
+    print("📊 Métricas de Avaliação:", metrics)
 
     # Salvar o modelo treinado
     save_model(model)

@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
@@ -17,7 +18,7 @@ def scale_features(X_train, X_test):
     scaler = StandardScaler()
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
-    return X_train_scaled, X_test_scaled
+    return X_train_scaled, X_test_scaled, scaler
 
 def balance_data_smote(X_train, y_train):
     smote = SMOTE(random_state=42)
@@ -52,6 +53,11 @@ def save_processed(X_train_bal, X_test, y_train_bal, y_test, base_path="data/pro
     for name, p in paths.items():
         print(f"   - {name}: {p}")
 
+def save_scaler(scaler, path="models/scaler.pkl"):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    joblib.dump(scaler, path)
+    print("✔ Escalador salvo com sucesso em:", path)
+
 def preprocess_pipeline():
     print("🚀 Iniciando pipeline de pré-processamento...")
 
@@ -69,14 +75,17 @@ def preprocess_pipeline():
     print("✔ Dados divididos em treino/teste")
 
     # 4 — Escalar (NOME DA FUNÇÃO CORRIGIDO)
-    X_train_scaled, X_test_scaled = scale_features(X_train, X_test)
+    X_train_scaled, X_test_scaled, scaler = scale_features(X_train, X_test)
     print("✔ Dados escalados")
 
-    # 5 — Balancear com SMOTE
+    # 5 - Salvar o escalador
+    save_scaler(scaler)
+
+    # 6 — Balancear com SMOTE
     X_train_bal, y_train_bal = balance_data_smote(X_train_scaled, y_train)
     print("✔ Dados balanceados com SMOTE")
 
-    # 6 — Salvar tudo (CAMINHO RELATIVO)
+    # 7 — Salvar tudo (CAMINHO RELATIVO)
     save_processed(
         X_train_bal, 
         X_test_scaled, 
