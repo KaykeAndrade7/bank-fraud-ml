@@ -28,50 +28,49 @@ O foco é construir um sistema escalável, interpretável e aplicável a cenári
 
 ### ✔ Distribuição das classes
 
-* Fraude representa menos de 1% das transações.
-* Indica necessidade de reamostragem (SMOTE).
+* Fraudes representam menos de 1%.
+* Indica necessidade de técnicas de balanceamento (SMOTE).
 
-### ✔ Análise das features
+### ✔ Análise das Features
 
-* Variáveis PCA (V1–V28) possuem padrões diferentes entre fraudes e não fraudes.
-* Variável `Amount` apresenta cauda longa e alta variabilidade.
+* Variáveis PCA apresentam padrões distintos entre fraudes e não fraudes.
+* `Amount` apresenta cauda longa e variância elevada.
 
 ### ✔ Correlação
 
-* Componentes **V17, V14 e V12** mostram forte relação com a classe fraudulenta.
-* Algumas componentes PCA carregam alto poder discriminativo.
+* Componentes **V17, V14 e V12** têm forte correlação com a classe.
+* PCA preserva sinais importantes para classificação.
 
 ### ✔ Outliers
 
-* Presentes, mas esperados em dados transformados por PCA.
-* Mantidos no conjunto.
+* Mantidos, pois são esperados após transformação PCA.
 
 ### ✔ Gráficos utilizados
 
 * Histogramas por classe
+* Countplot da variável alvo
 * Heatmap de correlação
-* Countplot das classes
-* Boxplots de variáveis importantes
+* Boxplots exploratórios
 
 ---
 
 ## 🧹 Pré-processamento
 
-O pré-processamento foi implementado em `src/preprocessing.py` dentro de um pipeline automatizado.
+Implementado em **`src/preprocessing.py`** como um pipeline automatizado e modular.
 
 ### ✔ 1. Separação X / y
 
-* `Class` é a variável-alvo.
-* Demais colunas são features.
+* `Class` = target
+* Demais colunas = features
 
-### ✔ 2. Train-test split (80/20)
+### ✔ 2. Train-Test Split (80/20)
 
-* Divisão estratificada para preservar proporção de fraudes.
+* Divisão estratificada para manter a proporção real de fraudes.
 
 ### ✔ 3. Normalização (StandardScaler)
 
-* Ajustado **somente no conjunto de treino**.
-* Aplicado no teste para evitar *data leakage*.
+* Ajustado **somente no treino**
+* Aplicado no teste para evitar *data leakage*
 * Scaler salvo em:
 
 ```
@@ -80,13 +79,12 @@ models/scaler.pkl
 
 ### ✔ 4. Balanceamento com SMOTE
 
-* Aplicado apenas no treino.
-* Aumenta a classe minoritária de forma sintética.
-* Melhora o aprendizado em datasets desbalanceados.
+* Aplicado **apenas no treino**
+* Cria exemplos sintéticos da classe minoritária
 
 ### ✔ 5. Salvamento dos dados processados
 
-Arquivos gerados:
+Arquivos gerados em:
 
 ```
 data/processed/
@@ -98,63 +96,131 @@ data/processed/
 
 ### ✔ 6. Pipeline completo (`preprocess_pipeline()`)
 
-Fluxo implementado:
+Fluxo:
 
-1. Carrega os dados
+1. Carrega dados
 2. Separa features e target
 3. Divide treino/teste
-4. Escala os dados
+4. Escala
 5. Aplica SMOTE
 6. Salva scaler + arrays
-7. Retorna formas para validação
+7. Retorna formatos finais
 
 ---
 
-## 🤖 Modelagem — Logistic Regression (Etapa finalizada)
+# 🤖 Modelagem
 
-O primeiro modelo treinado foi **Regressão Logística**, utilizando os dados pré-processados.
+Após o pré-processamento, foram treinados três modelos:
 
-### 📊 Resultados Obtidos
+---
+
+# **📌 1. Logistic Regression**
+
+### 📊 Resultados
 
 **ROC-AUC:** 0.9709
 **Recall:** 0.9183
 **Precision:** 0.0579
 
-### 📌 Matriz de Confusão
+### 🧩 Matriz de Confusão
 
 |            | Previsto 0 | Previsto 1 |
 | ---------- | ---------- | ---------- |
 | **Real 0** | 55402      | 1462       |
 | **Real 1** | 8          | 90         |
 
-### 📝 Interpretação profissional
+### ✔ Interpretação
 
-* **ROC-AUC de 0.97** → excelente capacidade de separação.
-* **Recall = 91,8%** → modelo recupera a maioria das fraudes (prioridade do setor).
-* **Precisão baixa (5,7%)** → esperado em datasets extremamente desbalanceados.
-* **Apenas 8 fraudes não detectadas** → ótimo desempenho para aplicações reais.
+* Excelente separação geral (AUC 0.97)
+* Ótimo recall (captura a maioria das fraudes)
+* Baixa precisão devido ao desbalanceamento
+* Erra pouco em deixar fraudes passarem (somente 8)
 
 ---
 
-## 🔮 Próximas Etapas (Dia 5 em diante)
+# **📌 2. Random Forest**
 
-### Machine Learning:
+### 📊 Resultados
 
-* Random Forest
-* Gradient Boosting
-* XGBoost / LightGBM
+**ROC-AUC:** 0.9684
+**Recall:** 0.8265
+**Precision:** 0.8709
 
-### Deep Learning:
+### 🧩 Matriz de Confusão
 
-* MLP (rede neural densa)
+|            | Previsto 0 | Previsto 1 |
+| ---------- | ---------- | ---------- |
+| **Real 0** | 56852      | 12         |
+| **Real 1** | 17         | 81         |
+
+### ✔ Interpretação
+
+* Altíssima precisão (87%) → excelente para evitar falsos alarmes
+* Recall mais baixo que LR/GB (perde algumas fraudes)
+* Ótima escolha quando se quer precisão de alertas
+
+---
+
+# **📌 3. Gradient Boosting**
+
+### 📊 Resultados
+
+**ROC-AUC:** 0.9809
+**Recall:** 0.9183
+**Precision:** 0.1133
+
+### 🧩 Matriz de Confusão
+
+|            | Previsto 0 | Previsto 1 |
+| ---------- | ---------- | ---------- |
+| **Real 0** | 56160      | 704        |
+| **Real 1** | 8          | 90         |
+
+### ✔ Interpretação
+
+* Melhor AUC entre os modelos
+* Recall igual ao da Regressão Logística
+* Precisão baixa, mas esperada para problemas severamente desbalanceados
+
+---
+
+# 🏆 Comparação Geral dos Modelos
+
+| Modelo              | ROC-AUC | Recall | Precision |
+| ------------------- | ------- | ------ | --------- |
+| Logistic Regression | 0.9709  | 0.9183 | 0.0579    |
+| Random Forest       | 0.9684  | 0.8265 | 0.8709    |
+| Gradient Boosting   | 0.9809  | 0.9183 | 0.1133    |
+
+### ✔ Interpretação Profissional
+
+* **Maior AUC:** Gradient Boosting
+* **Maior Recall:** Logistic Regression / Gradient Boosting
+* **Maior Precision:** Random Forest (de longe)
+
+Cada modelo tem força diferente → ideal para ensemble no futuro.
+
+---
+
+## 🔮 Próximas Etapas 
+
+### ML Avançado
+
+* XGBoost
+* LightGBM
+* Ensemble (votação ou stacking)
+
+### Deep Learning
+
+* MLP simples
+* Batch Normalization
 * Early Stopping
-* Comparação com modelos tradicionais
 
-### Relatórios:
+### Infraestrutura
 
-* Tabelas comparativas de métricas
-* Gráficos de performance
-* Seleção de modelo final para produção
+* Scripts automatizados
+* Comparação final dos modelos
+* Seleção de modelo para produção
 
 ---
 
@@ -173,11 +239,19 @@ O primeiro modelo treinado foi **Regressão Logística**, utilizando os dados pr
 
 ## 📌 Status Atual
 
-**Etapa concluída:**
-✔ Pré-processamento completo
-✔ Treinamento e avaliação do modelo Logistic Regression
+### ✔ Concluído até agora:
 
-**Próxima etapa:**
-➡ Treinar modelos avançados (Random Forest, Gradient Boosting)
+* EDA completo
+* Pipeline de pré-processamento
+* Balanceamento com SMOTE
+* Treinamento de:
+
+  * Logistic Regression
+  * Random Forest
+  * Gradient Boosting
+
+### ➡ Próxima etapa:
+
+* Modelos avançados e tuning
 
 ---
