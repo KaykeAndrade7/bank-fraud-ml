@@ -94,7 +94,7 @@ def preprocess_pipeline():
         base_path="data/processed"
     )
 
-    # 7 — Retornar shapes
+    # 8 — Retornar shapes
     print("\n📐 Shapes finais:")
     print("X_train_bal:", X_train_bal.shape)
     print("y_train_bal:", y_train_bal.shape)

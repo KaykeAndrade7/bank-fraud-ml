@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import os
 import joblib
 from sklearn.metrics import roc_auc_score,recall_score,precision_score,confusion_matrix
@@ -24,6 +25,18 @@ def train_logistic_regression(X_train, y_train):
     
     return model
 
+def train_random_forest(X_train, y_train):
+    model = RandomForestClassifier(n_estimators=100, random_state=42,class_weight='balanced')
+    model.fit(X_train, y_train)
+    
+    return model
+
+def train_gradient_boosting(X_train, y_train):
+    model = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=42)
+    model.fit(X_train, y_train)
+    
+    return model
+
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
     y_proba = model.predict_proba(X_test)[:, 1]
@@ -39,7 +52,7 @@ def evaluate_model(model, X_test, y_test):
     "conf_matrix": cm
     }
 
-def save_model(model, path="models/logistic_regression.pkl"):
+def save_model(model, path):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     joblib.dump(model, path)
     print(f"✔ Modelo salvo em: {path}")
