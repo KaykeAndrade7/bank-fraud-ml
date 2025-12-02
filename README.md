@@ -3,7 +3,7 @@
 ### Previsão de transações bancárias fraudulentas usando aprendizado de máquina
 
 Este projeto implementa um pipeline completo para **detecção de fraudes em cartões de crédito**, utilizando o dataset real *Credit Card Fraud Detection* do Kaggle.
-O foco é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário.
+O objetivo é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário.
 
 ---
 
@@ -15,12 +15,12 @@ O foco é construir um sistema escalável, interpretável e aplicável a cenári
 ### **Características principais:**
 
 * 284.807 transações
-* Apenas **0,17%** são fraudulentas → *problema severamente desbalanceado*
-* Features V1–V28 geradas por PCA (dados anonimizados)
-* Coluna **Class** é a variável-alvo:
+* Apenas **0,17%** são fraudes (extremamente desbalanceado)
+* Features V1–V28 são componentes PCA (dados anonimizados)
+* Coluna **Class** é o alvo:
 
-  * `0` → transação normal
-  * `1` → transação fraudulenta
+  * `0` → legítima
+  * `1` → fraude
 
 ---
 
@@ -28,50 +28,42 @@ O foco é construir um sistema escalável, interpretável e aplicável a cenári
 
 ### ✔ Distribuição das classes
 
-* Fraudes representam menos de 1%.
-* Indica necessidade de técnicas de balanceamento (SMOTE).
+* Fraudes < 1% → necessidade de técnicas de balanceamento (SMOTE).
 
 ### ✔ Análise das Features
 
-* Variáveis PCA apresentam padrões distintos entre fraudes e não fraudes.
-* `Amount` apresenta cauda longa e variância elevada.
+* Features PCA apresentam padrões distintos entre fraudes e não fraudes.
+* `Amount` apresenta alta variabilidade e cauda longa.
 
 ### ✔ Correlação
 
-* Componentes **V17, V14 e V12** têm forte correlação com a classe.
-* PCA preserva sinais importantes para classificação.
+* V17, V14 e V12 correlacionam fortemente com a classe.
+* PCA preserva componentes discriminativas importantes.
 
 ### ✔ Outliers
 
-* Mantidos, pois são esperados após transformação PCA.
+* Mantidos (esperados após PCA).
 
 ### ✔ Gráficos utilizados
 
-* Histogramas por classe
-* Countplot da variável alvo
+* Histogramas
+* Countplot
 * Heatmap de correlação
-* Boxplots exploratórios
+* Boxplots
 
 ---
 
 ## 🧹 Pré-processamento
 
-Implementado em **`src/preprocessing.py`** como um pipeline automatizado e modular.
+Pipeline implementado em **`src/preprocessing.py`**.
 
 ### ✔ 1. Separação X / y
 
-* `Class` = target
-* Demais colunas = features
-
-### ✔ 2. Train-Test Split (80/20)
-
-* Divisão estratificada para manter a proporção real de fraudes.
+### ✔ 2. Train-test split (80/20, estratificado)
 
 ### ✔ 3. Normalização (StandardScaler)
 
-* Ajustado **somente no treino**
-* Aplicado no teste para evitar *data leakage*
-* Scaler salvo em:
+Scaler salvo em:
 
 ```
 models/scaler.pkl
@@ -79,12 +71,9 @@ models/scaler.pkl
 
 ### ✔ 4. Balanceamento com SMOTE
 
-* Aplicado **apenas no treino**
-* Cria exemplos sintéticos da classe minoritária
+### ✔ 5. Salvamento dos arrays processados
 
-### ✔ 5. Salvamento dos dados processados
-
-Arquivos gerados em:
+Arquivos gerados:
 
 ```
 data/processed/
@@ -94,93 +83,138 @@ data/processed/
   ├── y_test.npy
 ```
 
-### ✔ 6. Pipeline completo (`preprocess_pipeline()`)
+### ✔ 6. Pipeline final
 
-Fluxo:
-
-1. Carrega dados
-2. Separa features e target
-3. Divide treino/teste
-4. Escala
-5. Aplica SMOTE
-6. Salva scaler + arrays
-7. Retorna formatos finais
+Carrega dados → separa → divide → escala → balanceia → salva → retorna shapes.
 
 ---
 
 # 🤖 Modelagem
 
-Após o pré-processamento, foram treinados três modelos:
+Foram treinados **5 modelos**:
+
+* Logistic Regression
+* Random Forest
+* Gradient Boosting
+* XGBoost
+* LightGBM
+
+Todos treinados em `train_model.py`.
 
 ---
 
-# **📌 1. Logistic Regression**
+# 📌 1. Logistic Regression
 
 ### 📊 Resultados
 
-**ROC-AUC:** 0.9709
-**Recall:** 0.9183
-**Precision:** 0.0579
+* **ROC-AUC:** 0.9709
+* **Recall:** 0.9183
+* **Precision:** 0.0579
 
 ### 🧩 Matriz de Confusão
 
-|            | Previsto 0 | Previsto 1 |
-| ---------- | ---------- | ---------- |
-| **Real 0** | 55402      | 1462       |
-| **Real 1** | 8          | 90         |
+|            | Prev. 0 | Prev. 1 |
+| ---------- | ------- | ------- |
+| **Real 0** | 55402   | 1462    |
+| **Real 1** | 8       | 90      |
 
 ### ✔ Interpretação
 
-* Excelente separação geral (AUC 0.97)
-* Ótimo recall (captura a maioria das fraudes)
-* Baixa precisão devido ao desbalanceamento
-* Erra pouco em deixar fraudes passarem (somente 8)
+* Ótima separação (AUC 0.97)
+* Excelente recall
+* Baixa precisão, esperado no desbalanceamento
 
 ---
 
-# **📌 2. Random Forest**
+# 📌 2. Random Forest
 
 ### 📊 Resultados
 
-**ROC-AUC:** 0.9684
-**Recall:** 0.8265
-**Precision:** 0.8709
+* **ROC-AUC:** 0.9684
+* **Recall:** 0.8265
+* **Precision:** 0.8709
 
 ### 🧩 Matriz de Confusão
 
-|            | Previsto 0 | Previsto 1 |
-| ---------- | ---------- | ---------- |
-| **Real 0** | 56852      | 12         |
-| **Real 1** | 17         | 81         |
+|            | Prev. 0 | Prev. 1 |
+| ---------- | ------- | ------- |
+| **Real 0** | 56852   | 12      |
+| **Real 1** | 17      | 81      |
 
 ### ✔ Interpretação
 
-* Altíssima precisão (87%) → excelente para evitar falsos alarmes
-* Recall mais baixo que LR/GB (perde algumas fraudes)
-* Ótima escolha quando se quer precisão de alertas
+* Altíssima precisão
+* Recall mais baixo
+* Ideal quando se quer evitar falsos positivos
 
 ---
 
-# **📌 3. Gradient Boosting**
+# 📌 3. Gradient Boosting
 
 ### 📊 Resultados
 
-**ROC-AUC:** 0.9809
-**Recall:** 0.9183
-**Precision:** 0.1133
+* **ROC-AUC:** 0.9809
+* **Recall:** 0.9183
+* **Precision:** 0.1133
 
 ### 🧩 Matriz de Confusão
 
-|            | Previsto 0 | Previsto 1 |
-| ---------- | ---------- | ---------- |
-| **Real 0** | 56160      | 704        |
-| **Real 1** | 8          | 90         |
+|            | Prev. 0 | Prev. 1 |
+| ---------- | ------- | ------- |
+| **Real 0** | 56160   | 704     |
+| **Real 1** | 8       | 90      |
 
 ### ✔ Interpretação
 
 * Melhor AUC entre os modelos
-* Recall igual ao da Regressão Logística
-* Precisão baixa, mas esperada para problemas severamente desbalanceados
+* Recall excelente
+* Precisão baixa devido ao desbalanceamento
+
+---
+
+# 📌 4. XGBoost
+
+### 📊 Resultados
+
+* **ROC-AUC:** 0.9800
+* **Recall:** 0.8775
+* **Precision:** 0.2409
+
+### 🧩 Matriz de Confusão
+
+|            | Prev. 0 | Prev. 1 |
+| ---------- | ------- | ------- |
+| **Real 0** | 56593   | 271     |
+| **Real 1** | 12      | 86      |
+
+### ✔ Interpretação
+
+* Excelente AUC
+* Bom recall
+* Melhor precisão que LR/GB
+
+---
+
+# 📌 5. LightGBM
+
+### 📊 Resultados
+
+* **ROC-AUC:** 0.9568
+* **Recall:** 0.8367
+* **Precision:** 0.6259
+
+### 🧩 Matriz de Confusão
+
+|            | Prev. 0 | Prev. 1 |
+| ---------- | ------- | ------- |
+| **Real 0** | 56815   | 49      |
+| **Real 1** | 16      | 82      |
+
+### ✔ Interpretação
+
+* Excelente precisão
+* Bom recall
+* Menor AUC que XGBoost/GB
 
 ---
 
@@ -191,36 +225,36 @@ Após o pré-processamento, foram treinados três modelos:
 | Logistic Regression | 0.9709  | 0.9183 | 0.0579    |
 | Random Forest       | 0.9684  | 0.8265 | 0.8709    |
 | Gradient Boosting   | 0.9809  | 0.9183 | 0.1133    |
+| XGBoost             | 0.9800  | 0.8775 | 0.2409    |
+| LightGBM            | 0.9568  | 0.8367 | 0.6259    |
 
-### ✔ Interpretação Profissional
+### ✔ Conclusões Profissionais
 
-* **Maior AUC:** Gradient Boosting
-* **Maior Recall:** Logistic Regression / Gradient Boosting
-* **Maior Precision:** Random Forest (de longe)
+* **Melhor AUC:** Gradient Boosting
+* **Melhor Recall:** Logistic Regression & Gradient Boosting
+* **Melhor Precision:** Random Forest (de longe)
 
-Cada modelo tem força diferente → ideal para ensemble no futuro.
+Cada modelo apresenta vantagens específicas → perfeito para testes de ensemble no futuro.
 
 ---
 
-## 🔮 Próximas Etapas 
+# 🔮 Próximas Etapas
 
-### ML Avançado
+### 🔧 Machine Learning Avançado
 
-* XGBoost
-* LightGBM
-* Ensemble (votação ou stacking)
+* Hiperparametrização (Grid Search / Optuna)
+* Ensemble (Votação, Stacking)
 
-### Deep Learning
+### 🤖 Deep Learning
 
-* MLP simples
-* Batch Normalization
+* MLP
 * Early Stopping
 
-### Infraestrutura
+### 🏗 Infraestrutura
 
-* Scripts automatizados
-* Comparação final dos modelos
-* Seleção de modelo para produção
+* Pipeline de produção
+* FastAPI para servir o modelo
+* Script de inferência
 
 ---
 
@@ -230,8 +264,10 @@ Cada modelo tem força diferente → ideal para ensemble no futuro.
 * Pandas / NumPy
 * Matplotlib / Seaborn
 * Scikit-learn
-* Imbalanced-Learn (SMOTE)
-* TensorFlow (CPU)
+* Imbalanced-Learn
+* XGBoost
+* LightGBM
+* TensorFlow
 * Joblib
 * Jupyter Notebook
 
@@ -239,19 +275,17 @@ Cada modelo tem força diferente → ideal para ensemble no futuro.
 
 ## 📌 Status Atual
 
-### ✔ Concluído até agora:
+### ✔ Concluído
 
 * EDA completo
 * Pipeline de pré-processamento
-* Balanceamento com SMOTE
-* Treinamento de:
+* SMOTE
+* Treinamento de **5 modelos**
+* Comparação completa
 
-  * Logistic Regression
-  * Random Forest
-  * Gradient Boosting
+### ➡ Próxima Etapa
 
-### ➡ Próxima etapa:
-
-* Modelos avançados e tuning
+* Tuning + API
+* Escolha do modelo final para produção
 
 ---

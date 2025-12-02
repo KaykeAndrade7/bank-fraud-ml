@@ -3,6 +3,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import os
 import joblib
+from xgboost import XGBClassifier
+from lightgbm import LGBMClassifier
 from sklearn.metrics import roc_auc_score,recall_score,precision_score,confusion_matrix
 
 def load_processed_data(base_path="data/processed/"):
@@ -35,6 +37,30 @@ def train_gradient_boosting(X_train, y_train):
     model = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1, random_state=42)
     model.fit(X_train, y_train)
     
+    return model
+
+def train_xgboost(X_train, y_train):
+    model = XGBClassifier(
+        n_estimators=300,
+        learning_rate=0.05,
+        max_depth=4,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        eval_metric="logloss",
+        random_state=42
+    )
+    model.fit(X_train, y_train)
+    return model
+
+def train_lightgbm(X_train, y_train):
+    model = LGBMClassifier(
+        n_estimators=300,
+        learning_rate=0.05,
+        max_depth=-1,
+        num_leaves=31,
+        random_state=42
+    )
+    model.fit(X_train, y_train)
     return model
 
 def evaluate_model(model, X_test, y_test):

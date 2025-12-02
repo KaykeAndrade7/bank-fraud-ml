@@ -6,3 +6,5 @@ scikit-learn
 tensorflow-cpu
 jupyter
 imbalanced-learn
+xgboost
+lightgbm
