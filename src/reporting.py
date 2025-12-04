@@ -91,9 +91,9 @@ def generate_pdf_report(metrics_df):
     story.append(Spacer(1, 12))
 
     for img in [
-        "reports/roc_auc_comparison.png",
-        "reports/recall_comparison.png",
-        "reports/precision_comparison.png"
+        "reports/plots/roc_auc_comparison.png",
+        "reports/plots/recall_comparison.png",
+        "reports/plots/precision_comparison.png"
     ]:
         if os.path.exists(img):
             story.append(Image(img, width=400, height=250))

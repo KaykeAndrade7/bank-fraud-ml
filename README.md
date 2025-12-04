@@ -3,65 +3,45 @@
 ### Previsão de transações bancárias fraudulentas usando aprendizado de máquina
 
 Este projeto implementa um pipeline completo para **detecção de fraudes em cartões de crédito**, utilizando o dataset real *Credit Card Fraud Detection* do Kaggle.
-O objetivo é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário.
+O objetivo é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário — passando por EDA, pré-processamento, modelagem, tuning e geração automática de relatórios.
 
 ---
 
-## 📊 Dataset
+# 📊 Dataset
 
 **Fonte:** Kaggle — *Credit Card Fraud Detection*
-**Link:** [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
+Link: [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
 
 ### **Características principais**
 
 * 284.807 transações
-* Apenas **0,17%** são fraudes (*dataset extremamente desbalanceado*)
-* Features **V1–V28** foram obtidas via PCA (dados anonimizados)
-* Coluna **Class** é o alvo:
+* Apenas **0,17%** são fraudes
+* Features **V1–V28** geradas via PCA
+* Alvo:
 
-  * `0` → transação legítima
-  * `1` → transação fraudulenta
-
----
-
-## 🔍 Exploratory Data Analysis (EDA)
-
-### ✔ Distribuição das classes
-
-Fraudes representam menos de 1%, exigindo técnicas de balanceamento como SMOTE.
-
-### ✔ Análise das Features
-
-* Componentes PCA apresentam padrões diferentes entre fraude e não fraude.
-* `Amount` possui alta variabilidade e cauda longa.
-
-### ✔ Correlação
-
-* **V17, V14 e V12** têm maior peso na detecção de fraude.
-
-### ✔ Outliers
-
-* Mantidos — são esperados após transformação PCA.
-
-### ✔ Gráficos utilizados
-
-* Histogramas
-* Countplot da variável alvo
-* Heatmap de correlação
-* Boxplots
+  * `0` → legítima
+  * `1` → fraudulenta
 
 ---
 
-## 🧹 Pré-processamento
+# 🔍 Exploratory Data Analysis (EDA)
 
-Pipeline implementado em **`src/preprocessing.py`**.
+✔ Fraudes < 1% (dataset extremamente desbalanceado)
+✔ PCA cria componentes informativos → V17, V14, V12 se destacam
+✔ `Amount` com cauda longa
+✔ Outliers mantidos
+✔ Gráficos: histogramas, boxplots, countplot, correlação
 
-### ✔ Etapas
+---
+
+# 🧹 Pré-processamento
+
+Pipeline em **`src/preprocessing.py`**, contendo:
 
 1. Separação X / y
-2. Train-test split estratificado (80/20)
-3. Normalização com **StandardScaler**
-4. Balanceamento com **SMOTE**
+2. Train-test split 80/20 estratificado
+3. Normalização (StandardScaler)
+4. Balanceamento com SMOTE
 5. Salvamento dos arrays processados
 
 Arquivos gerados:
@@ -74,19 +54,13 @@ data/processed/
   ├── y_test.npy
 ```
 
-Scaler salvo em:
-
-```
-models/scaler.pkl
-```
-
-Fluxo completo: carregar → separar → dividir → escalar → balancear → salvar.
+Scaler salvo em `models/scaler.pkl`.
 
 ---
 
-# 🤖 Modelagem
+# 🤖 Modelagem — Modelos Base
 
-Foram treinados **5 modelos**:
+Foram treinados 5 modelos iniciais:
 
 * Logistic Regression
 * Random Forest
@@ -94,186 +68,181 @@ Foram treinados **5 modelos**:
 * XGBoost
 * LightGBM
 
-Treinamento realizado em **`train_model.py`**.
+Com métricas avaliadas em ROC-AUC, Recall, Precision e matriz de confusão.
+
+(Se desejar manter a seção antiga com resultados *antes* do tuning, deixe como está.)
 
 ---
 
-# 📌 1. Logistic Regression
+# ⚙️ Tuning de Hiperparâmetros (NOVO — Dia 8)
 
-### 📊 Resultados
+Nesta etapa, cada modelo foi **otimizado individualmente** usando `RandomizedSearchCV`, sempre com foco em:
 
-* **ROC-AUC:** 0.9709
-* **Recall:** 0.9183
-* **Precision:** 0.0579
+✔ Maximizar **ROC-AUC**
+✔ Manter execução leve para evitar sobreaquecimento
+✔ Reduzir busca para estabilidade e performance
 
-### 🧩 Matriz de Confusão
+Funções de tuning implementadas em:
+**`src/tuning.py`**
 
-| Real \ Previsto | 0     | 1    |
-| --------------- | ----- | ---- |
-| **0**           | 55402 | 1462 |
-| **1**           | 8     | 90   |
+Modelos tunados:
 
-### ✔ Interpretação
+### **1. Logistic Regression (Tuned)**
 
-Alta separação e excelente recall; precisão baixa é esperada em cenários desbalanceados.
+* Ajuste de `C`, `penalty`, `solver`
+* Resultado:
 
----
+  * ROC-AUC: **0.9755**
+  * Precision: **0.8235**
+  * Recall: **0.5714**
 
-# 📌 2. Random Forest
-
-### 📊 Resultados
-
-* **ROC-AUC:** 0.9684
-* **Recall:** 0.8265
-* **Precision:** 0.8709
-
-### 🧩 Matriz de Confusão
-
-| Real \ Previsto | 0     | 1  |
-| --------------- | ----- | -- |
-| **0**           | 56852 | 12 |
-| **1**           | 17    | 81 |
-
-### ✔ Interpretação
-
-Modelo muito preciso, ideal quando se deseja evitar falsos positivos, mas perde algumas fraudes.
+→ Modelo mais conservador após tuning (alta precisão, recall menor).
 
 ---
 
-# 📌 3. Gradient Boosting
+### **2. Random Forest (Tuned)**
 
-### 📊 Resultados
+* Ajuste de número de árvores, profundidade, min_samples, max_features
+* Resultado:
 
-* **ROC-AUC:** 0.9809
-* **Recall:** 0.9183
-* **Precision:** 0.1133
+  * ROC-AUC: **0.9652**
+  * Recall: **0.7959**
+  * Precision: **0.8764**
 
-### 🧩 Matriz de Confusão
-
-| Real \ Previsto | 0     | 1   |
-| --------------- | ----- | --- |
-| **0**           | 56160 | 704 |
-| **1**           | 8     | 90  |
-
-### ✔ Interpretação
-
-Melhor AUC entre todos os modelos; recall muito alto.
+→ Modelo mais equilibrado e robusto.
 
 ---
 
-# 📌 4. XGBoost
+### **3. Gradient Boosting (Tuned)**
 
-### 📊 Resultados
+* Ajuste de `n_estimators`, `max_depth`, `learning_rate`, `subsample`
+* Resultado:
 
-* **ROC-AUC:** 0.9800
-* **Recall:** 0.8775
-* **Precision:** 0.2409
+  * ROC-AUC: **0.9129**
+  * Precision: **0.7604**
+  * Recall: **0.7449**
 
-### 🧩 Matriz de Confusão
-
-| Real \ Previsto | 0     | 1   |
-| --------------- | ----- | --- |
-| **0**           | 56593 | 271 |
-| **1**           | 12    | 86  |
-
-### ✔ Interpretação
-
-Ótimo equilíbrio entre recall e precisão.
+→ Performance reduziu por conta da amostra reduzida (esperado).
 
 ---
 
-# 📌 5. LightGBM
+### **4. XGBoost (Tuned)**
 
-### 📊 Resultados
+* Ajuste de `eta`, `subsample`, `colsample_bytree`, `max_depth`
+* (Inclui early stopping automático)
 
-* **ROC-AUC:** 0.9568
-* **Recall:** 0.8367
-* **Precision:** 0.6259
+Resultado:
 
-### 🧩 Matriz de Confusão
+* ROC-AUC: **0.9758** *(melhor do tuning)*
+* Precision: **0.8947**
+* Recall: **0.6939**
 
-| Real \ Previsto | 0     | 1  |
-| --------------- | ----- | -- |
-| **0**           | 56815 | 49 |
-| **1**           | 16    | 82 |
-
-### ✔ Interpretação
-
-Boa precisão; menor AUC comparado aos demais.
+→ Melhor modelo em AUC + precisão.
 
 ---
 
-# 🏆 Comparação Geral
+### **5. LightGBM (Tuned)**
 
-| Modelo              | ROC-AUC | Recall | Precision |
-| ------------------- | ------- | ------ | --------- |
-| Logistic Regression | 0.9709  | 0.9183 | 0.0579    |
-| Random Forest       | 0.9684  | 0.8265 | 0.8709    |
-| Gradient Boosting   | 0.9809  | 0.9183 | 0.1133    |
-| XGBoost             | 0.9800  | 0.8775 | 0.2409    |
-| LightGBM            | 0.9568  | 0.8367 | 0.6259    |
+* Ajuste de `learning_rate`, `n_estimators`, profundidade, leaves
+* Resultado:
 
-### ✔ Conclusões Profissionais
+  * ROC-AUC: **0.5480**
 
-* **Melhor AUC:** Gradient Boosting
-* **Melhor Recall:** Logistic Regression & Gradient Boosting
-* **Melhor Precision:** Random Forest
+→ Não performou bem com dataset reduzido (comportamento esperado).
 
-Cada modelo mostra forças diferentes — excelente caso para ensemble.
+---
+
+# 🏆 Comparação — Modelos Tunados
+
+| Modelo                      | ROC-AUC | Recall | Precision |
+| --------------------------- | ------- | ------ | --------- |
+| Logistic Regression (Tuned) | 0.9755  | 0.5714 | 0.8235    |
+| Random Forest (Tuned)       | 0.9652  | 0.7959 | 0.8764    |
+| Gradient Boosting (Tuned)   | 0.9129  | 0.7449 | 0.7604    |
+| XGBoost (Tuned)             | 0.9758  | 0.6939 | 0.8947    |
+| LightGBM (Tuned)            | 0.5480  | 0.1735 | 0.0829    |
+
+## ✔ Conclusões do Tuning (Dia 8)
+
+* **Melhor modelo geral:** XGBoost (Tuned)
+* **Melhor modelo equilibrado:** Random Forest (Tuned)
+* **Mais conservador (alta precisão):** Logistic Regression (Tuned)
+* **Modelo que falhou com amostra reduzida:** LightGBM (Tuned)
+
+---
+
+# 📄 Relatório PDF Automático — (NOVO)
+
+Agora o projeto gera automaticamente:
+
+✔ Tabela completa de métricas
+✔ Gráficos dos modelos
+✔ Conclusão automática (melhor AUC, recall, precisão)
+✔ PDF final em:
+
+```
+reports/model_report.pdf
+```
+
+Implementado em **`src/reporting.py`**.
 
 ---
 
 # 🔮 Próximas Etapas
 
-### 🔧 Machine Learning Avançado
+### 💡 Machine Learning Avançado
 
-* Hiperparametrização (Grid Search / Optuna)
-* Ensemble (Votação, Stacking)
+* Threshold tuning
+* Grid Search / Optuna
+* Ensemble (Stacking)
 
-### 🤖 Deep Learning
+### 🧠 Deep Learning
 
 * MLP
-* Dropout / BatchNorm
+* BatchNorm + Dropout
 * Early Stopping
 
-### 🏗 Infraestrutura
+### 🚀 Deploy
 
 * Pipeline de produção
 * API com FastAPI
-* Script de inferência
+* Endpoint `/predict`
+* Versionamento de modelos
 
 ---
 
-## ⚙ Tecnologias Utilizadas
+# ⚙ Tecnologias Utilizadas
 
 * Python 3.10+
 * Pandas / NumPy
 * Matplotlib / Seaborn
 * Scikit-learn
 * Imbalanced-Learn
-* XGBoost / LightGBM
+* XGBoost
+* LightGBM
 * TensorFlow
 * Joblib
-* Jupyter Notebook
-* ReportLab
 * Openpyxl
+* ReportLab
 
 ---
 
-## 📌 Status Atual
+# 📌 Status Atual
 
 ### ✔ Concluído
 
-* EDA completo
-* Pipeline de pré-processamento
-* SMOTE
-* Treinamento e comparação de **5 modelos**
-* Geração de métricas e gráficos
+* EDA
+* Pipeline completo
+* Balanceamento com SMOTE
+* Treinamento de 5 modelos
+* Tuning de 5 modelos
+* Relatório PDF final
+* Comparação automatizada
 
-### ➡ Próxima Etapa
+### ➡ Próxima etapa
 
-* Tuning
-* API
-* Modelo final para produção
+* Seleção do modelo final
+* API com FastAPI
+* Threshold tuning
 
 ---

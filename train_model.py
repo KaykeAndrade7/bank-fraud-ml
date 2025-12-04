@@ -1,71 +1,75 @@
 from src.reporting import generate_pdf_report
+from src.tuning import (
+    tune_logistic_regression,
+    tune_random_forest,
+    tune_gradient_boosting,
+    tune_XGboost,
+    tune_LightGBM
+)
 from src.modeling import (
     load_processed_data,
-    train_logistic_regression,
-    evaluate_model,
     save_model,
-    train_random_forest,
-    train_gradient_boosting,
-    train_lightgbm,
-    train_xgboost,
     build_metrics_dataframe,
     plot_model_metrics
 )
+
 
 def main():
     # Carregar dados processados
     print("📂 Carregando dados processados...")
     X_train, y_train, X_test, y_test = load_processed_data()
 
-    # Treinar Logistic Regression
-    print("\n🔹 Treinando Logistic Regression...")
-    lr_model = train_logistic_regression(X_train, y_train)
-    print("✔ Logistic Regression treinado.")
+    # Tuning dos modelos (opcional)
+    print("\n⚙️ Iniciando tuning de hiperparâmetros...")
 
-    # Treinar Random Forest
-    print("\n🔹 Treinando Random Forest...")
-    rf_model = train_random_forest(X_train, y_train)
-    print("✔ Random Forest treinado.")
+    # 1) Logistic Regression
+    lr_tuned = tune_logistic_regression(X_train, y_train, X_test, y_test)
+    print("✔ Logistic Regression tunado.")
 
-    # Treinar Gradient Boosting
-    print("\n🔹 Treinando Gradient Boosting...")
-    gb_model = train_gradient_boosting(X_train, y_train)
-    print("✔ Gradient Boosting treinado.")
+    # 2) Random Forest
+    rf_tuned = tune_random_forest(X_train, y_train, X_test, y_test)
+    print("✔ Random Forest tunado.")
 
-    # Treinar XGBoost
-    print("\n🔹 Treinando XGBoost...")
-    xgb_model = train_xgboost(X_train, y_train)
-    print("✔ XGBoost treinado.")
+    # 3) Gradient Boosting
+    gb_tuned = tune_gradient_boosting(X_train, y_train, X_test, y_test)
+    print("✔ Gradient Boosting tunado.")
 
-    # Treinar LightGBM
-    print("\n🔹 Treinando LightGBM...")
-    lgbm_model = train_lightgbm(X_train, y_train)
-    print("✔ LightGBM treinado.")
+    # 4) XGBoost
+    xgb_tuned = tune_XGboost(X_train, y_train, X_test, y_test)
+    print("✔ XGBoost tunado.")
+
+    # 5) LightGBM
+    lgbm_tuned = tune_LightGBM(X_train, y_train, X_test, y_test)
+    print("✔ LightGBM tunado.")
+    print("✔ Tuning de hiperparâmetros concluído.")
 
     # Avaliação dos modelos
     print("\n📊 Avaliando modelos...")
 
-    lr_metrics = evaluate_model(lr_model, X_test, y_test)
-    rf_metrics = evaluate_model(rf_model, X_test, y_test)
-    gb_metrics = evaluate_model(gb_model, X_test, y_test)
-    xgb_metrics = evaluate_model(xgb_model, X_test, y_test)
-    lgbm_metrics = evaluate_model(lgbm_model, X_test, y_test)
+    
+    lr_tuned_metrics = lr_tuned['final_metrics']
+    rf_tuned_metrics = rf_tuned['final_metrics']
+    gb_tuned_metrics = gb_tuned['final_metrics']
+    xgb_tuned_metrics = xgb_tuned['final_metrics']
+    lgbm_tuned_metrics = lgbm_tuned['final_metrics']
 
-    results = {
-    "Logistic Regression": lr_metrics,
-    "Random Forest": rf_metrics,
-    "Gradient Boosting": gb_metrics,
-    "XGBoost": xgb_metrics,
-    "LightGBM": lgbm_metrics
+
+    results_tuned = {
+    "Logistic Regression (Tuned)": lr_tuned_metrics,
+    "Random Forest (Tuned)": rf_tuned_metrics,
+    "Gradient Boosting (Tuned)": gb_tuned_metrics,
+    "XGBoost (Tuned)": xgb_tuned_metrics,
+    "LightGBM (Tuned)": lgbm_tuned_metrics
     }
 
     # Salvar modelos
     print("\n💾 Salvando modelos...")
-    save_model(lr_model, "models/logistic_regression.pkl")
-    save_model(rf_model, "models/random_forest.pkl")
-    save_model(gb_model, "models/gradient_boosting.pkl")
-    save_model(xgb_model, "models/xgboost.pkl")
-    save_model(lgbm_model, "models/lightgbm.pkl")
+    save_model(lr_tuned['best_model'], "models/logistic_regression_tuned.pkl")
+    save_model(rf_tuned['best_model'], "models/random_forest_tuned.pkl")
+    save_model(gb_tuned['best_model'], "models/gradient_boosting_tuned.pkl")
+    save_model(xgb_tuned['best_model'], "models/xgboost_tuned.pkl")
+    save_model(lgbm_tuned['best_model'], "models/lightgbm_tuned.pkl")
+    
 
     print("\n✔ Todos os modelos foram treinados e salvos com sucesso em /models/")
 
@@ -76,14 +80,15 @@ def main():
         print("-----------------------------------------------")
         for model_name, metrics in results.items():
             print(f"{model_name:20} {metrics['roc_auc']:.4f}   {metrics['recall']:.4f}   {metrics['precision']:.4f}")
-    print_model_comparison(results)
+
+    print_model_comparison(results_tuned)
 
     # Construir DataFrame de métricas
-    df = build_metrics_dataframe(results)
-    plot_model_metrics(df)
+    df_tuned = build_metrics_dataframe(results_tuned)
+    plot_model_metrics(df_tuned)
 
     # Gerar relatórios PDF
-    generate_pdf_report(df)
+    generate_pdf_report(df_tuned)
 
 if __name__ == "__main__":
     main()
