@@ -8,3 +8,5 @@ jupyter
 imbalanced-learn
 xgboost
 lightgbm
+reportlab
+openpyxl

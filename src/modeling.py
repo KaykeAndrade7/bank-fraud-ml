@@ -3,6 +3,9 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 import os
 import joblib
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from sklearn.metrics import roc_auc_score,recall_score,precision_score,confusion_matrix
@@ -62,6 +65,40 @@ def train_lightgbm(X_train, y_train):
     )
     model.fit(X_train, y_train)
     return model
+
+def build_metrics_dataframe(results: dict):
+
+    os.makedirs("reports", exist_ok=True)
+
+    rows = []
+    for model_name, metrics in results.items():
+        rows.append({
+            "model": model_name,
+            "roc_auc": metrics["roc_auc"],
+            "recall": metrics["recall"],
+            "precision": metrics["precision"]
+        })
+
+    df = pd.DataFrame(rows)
+
+    df.to_excel("reports/model_metrics.xlsx", index=False)
+
+    return df
+
+
+def plot_model_metrics(df):
+    os.makedirs("reports/plots", exist_ok=True)
+    metrics = ['roc_auc', 'recall', 'precision']
+    for metric in metrics:
+        plt.figure(figsize=(12, 6))
+        sns.barplot(x=df.index, y=df[metric])
+        plt.xlabel("Modelo")
+        plt.ylabel(metric.upper())
+        plt.title(f"{metric.upper()} — Comparação entre Modelos")
+        plt.tight_layout()
+        plt.savefig(f"reports/plots/{metric}_comparison.png")
+        plt.close()
+
 
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)

@@ -1,3 +1,4 @@
+from src.reporting import generate_pdf_report
 from src.modeling import (
     load_processed_data,
     train_logistic_regression,
@@ -6,7 +7,9 @@ from src.modeling import (
     train_random_forest,
     train_gradient_boosting,
     train_lightgbm,
-    train_xgboost
+    train_xgboost,
+    build_metrics_dataframe,
+    plot_model_metrics
 )
 
 def main():
@@ -48,12 +51,6 @@ def main():
     xgb_metrics = evaluate_model(xgb_model, X_test, y_test)
     lgbm_metrics = evaluate_model(lgbm_model, X_test, y_test)
 
-    print("\n📌 Métricas Logistic Regression:", lr_metrics)
-    print("📌 Métricas Random Forest:", rf_metrics)
-    print("📌 Métricas Gradient Boosting:", gb_metrics)
-    print("📌 Métricas XGBoost:", xgb_metrics)
-    print("📌 Métricas LightGBM:", lgbm_metrics)
-
     results = {
     "Logistic Regression": lr_metrics,
     "Random Forest": rf_metrics,
@@ -75,12 +72,18 @@ def main():
 
     def print_model_comparison(results):
         print("\n📊 Comparação de Modelos:")
-        print("Modelo               ROC-AUC    Recall    Precision")
+        print("Modelo           ROC-AUC    Recall    Precision")
         print("-----------------------------------------------")
         for model_name, metrics in results.items():
             print(f"{model_name:20} {metrics['roc_auc']:.4f}   {metrics['recall']:.4f}   {metrics['precision']:.4f}")
-    
     print_model_comparison(results)
+
+    # Construir DataFrame de métricas
+    df = build_metrics_dataframe(results)
+    plot_model_metrics(df)
+
+    # Gerar relatórios PDF
+    generate_pdf_report(df)
 
 if __name__ == "__main__":
     main()

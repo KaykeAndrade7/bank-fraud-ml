@@ -12,15 +12,15 @@ O objetivo é construir um sistema escalável, interpretável e aplicável a cen
 **Fonte:** Kaggle — *Credit Card Fraud Detection*
 **Link:** [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
 
-### **Características principais:**
+### **Características principais**
 
 * 284.807 transações
-* Apenas **0,17%** são fraudes (extremamente desbalanceado)
-* Features V1–V28 são componentes PCA (dados anonimizados)
+* Apenas **0,17%** são fraudes (*dataset extremamente desbalanceado*)
+* Features **V1–V28** foram obtidas via PCA (dados anonimizados)
 * Coluna **Class** é o alvo:
 
-  * `0` → legítima
-  * `1` → fraude
+  * `0` → transação legítima
+  * `1` → transação fraudulenta
 
 ---
 
@@ -28,26 +28,25 @@ O objetivo é construir um sistema escalável, interpretável e aplicável a cen
 
 ### ✔ Distribuição das classes
 
-* Fraudes < 1% → necessidade de técnicas de balanceamento (SMOTE).
+Fraudes representam menos de 1%, exigindo técnicas de balanceamento como SMOTE.
 
 ### ✔ Análise das Features
 
-* Features PCA apresentam padrões distintos entre fraudes e não fraudes.
-* `Amount` apresenta alta variabilidade e cauda longa.
+* Componentes PCA apresentam padrões diferentes entre fraude e não fraude.
+* `Amount` possui alta variabilidade e cauda longa.
 
 ### ✔ Correlação
 
-* V17, V14 e V12 correlacionam fortemente com a classe.
-* PCA preserva componentes discriminativas importantes.
+* **V17, V14 e V12** têm maior peso na detecção de fraude.
 
 ### ✔ Outliers
 
-* Mantidos (esperados após PCA).
+* Mantidos — são esperados após transformação PCA.
 
 ### ✔ Gráficos utilizados
 
 * Histogramas
-* Countplot
+* Countplot da variável alvo
 * Heatmap de correlação
 * Boxplots
 
@@ -57,21 +56,13 @@ O objetivo é construir um sistema escalável, interpretável e aplicável a cen
 
 Pipeline implementado em **`src/preprocessing.py`**.
 
-### ✔ 1. Separação X / y
+### ✔ Etapas
 
-### ✔ 2. Train-test split (80/20, estratificado)
-
-### ✔ 3. Normalização (StandardScaler)
-
-Scaler salvo em:
-
-```
-models/scaler.pkl
-```
-
-### ✔ 4. Balanceamento com SMOTE
-
-### ✔ 5. Salvamento dos arrays processados
+1. Separação X / y
+2. Train-test split estratificado (80/20)
+3. Normalização com **StandardScaler**
+4. Balanceamento com **SMOTE**
+5. Salvamento dos arrays processados
 
 Arquivos gerados:
 
@@ -83,9 +74,13 @@ data/processed/
   ├── y_test.npy
 ```
 
-### ✔ 6. Pipeline final
+Scaler salvo em:
 
-Carrega dados → separa → divide → escala → balanceia → salva → retorna shapes.
+```
+models/scaler.pkl
+```
+
+Fluxo completo: carregar → separar → dividir → escalar → balancear → salvar.
 
 ---
 
@@ -99,7 +94,7 @@ Foram treinados **5 modelos**:
 * XGBoost
 * LightGBM
 
-Todos treinados em `train_model.py`.
+Treinamento realizado em **`train_model.py`**.
 
 ---
 
@@ -113,16 +108,14 @@ Todos treinados em `train_model.py`.
 
 ### 🧩 Matriz de Confusão
 
-|            | Prev. 0 | Prev. 1 |
-| ---------- | ------- | ------- |
-| **Real 0** | 55402   | 1462    |
-| **Real 1** | 8       | 90      |
+| Real \ Previsto | 0     | 1    |
+| --------------- | ----- | ---- |
+| **0**           | 55402 | 1462 |
+| **1**           | 8     | 90   |
 
 ### ✔ Interpretação
 
-* Ótima separação (AUC 0.97)
-* Excelente recall
-* Baixa precisão, esperado no desbalanceamento
+Alta separação e excelente recall; precisão baixa é esperada em cenários desbalanceados.
 
 ---
 
@@ -136,16 +129,14 @@ Todos treinados em `train_model.py`.
 
 ### 🧩 Matriz de Confusão
 
-|            | Prev. 0 | Prev. 1 |
-| ---------- | ------- | ------- |
-| **Real 0** | 56852   | 12      |
-| **Real 1** | 17      | 81      |
+| Real \ Previsto | 0     | 1  |
+| --------------- | ----- | -- |
+| **0**           | 56852 | 12 |
+| **1**           | 17    | 81 |
 
 ### ✔ Interpretação
 
-* Altíssima precisão
-* Recall mais baixo
-* Ideal quando se quer evitar falsos positivos
+Modelo muito preciso, ideal quando se deseja evitar falsos positivos, mas perde algumas fraudes.
 
 ---
 
@@ -159,16 +150,14 @@ Todos treinados em `train_model.py`.
 
 ### 🧩 Matriz de Confusão
 
-|            | Prev. 0 | Prev. 1 |
-| ---------- | ------- | ------- |
-| **Real 0** | 56160   | 704     |
-| **Real 1** | 8       | 90      |
+| Real \ Previsto | 0     | 1   |
+| --------------- | ----- | --- |
+| **0**           | 56160 | 704 |
+| **1**           | 8     | 90  |
 
 ### ✔ Interpretação
 
-* Melhor AUC entre os modelos
-* Recall excelente
-* Precisão baixa devido ao desbalanceamento
+Melhor AUC entre todos os modelos; recall muito alto.
 
 ---
 
@@ -182,16 +171,14 @@ Todos treinados em `train_model.py`.
 
 ### 🧩 Matriz de Confusão
 
-|            | Prev. 0 | Prev. 1 |
-| ---------- | ------- | ------- |
-| **Real 0** | 56593   | 271     |
-| **Real 1** | 12      | 86      |
+| Real \ Previsto | 0     | 1   |
+| --------------- | ----- | --- |
+| **0**           | 56593 | 271 |
+| **1**           | 12    | 86  |
 
 ### ✔ Interpretação
 
-* Excelente AUC
-* Bom recall
-* Melhor precisão que LR/GB
+Ótimo equilíbrio entre recall e precisão.
 
 ---
 
@@ -205,20 +192,18 @@ Todos treinados em `train_model.py`.
 
 ### 🧩 Matriz de Confusão
 
-|            | Prev. 0 | Prev. 1 |
-| ---------- | ------- | ------- |
-| **Real 0** | 56815   | 49      |
-| **Real 1** | 16      | 82      |
+| Real \ Previsto | 0     | 1  |
+| --------------- | ----- | -- |
+| **0**           | 56815 | 49 |
+| **1**           | 16    | 82 |
 
 ### ✔ Interpretação
 
-* Excelente precisão
-* Bom recall
-* Menor AUC que XGBoost/GB
+Boa precisão; menor AUC comparado aos demais.
 
 ---
 
-# 🏆 Comparação Geral dos Modelos
+# 🏆 Comparação Geral
 
 | Modelo              | ROC-AUC | Recall | Precision |
 | ------------------- | ------- | ------ | --------- |
@@ -232,9 +217,9 @@ Todos treinados em `train_model.py`.
 
 * **Melhor AUC:** Gradient Boosting
 * **Melhor Recall:** Logistic Regression & Gradient Boosting
-* **Melhor Precision:** Random Forest (de longe)
+* **Melhor Precision:** Random Forest
 
-Cada modelo apresenta vantagens específicas → perfeito para testes de ensemble no futuro.
+Cada modelo mostra forças diferentes — excelente caso para ensemble.
 
 ---
 
@@ -248,12 +233,13 @@ Cada modelo apresenta vantagens específicas → perfeito para testes de ensembl
 ### 🤖 Deep Learning
 
 * MLP
+* Dropout / BatchNorm
 * Early Stopping
 
 ### 🏗 Infraestrutura
 
 * Pipeline de produção
-* FastAPI para servir o modelo
+* API com FastAPI
 * Script de inferência
 
 ---
@@ -265,11 +251,12 @@ Cada modelo apresenta vantagens específicas → perfeito para testes de ensembl
 * Matplotlib / Seaborn
 * Scikit-learn
 * Imbalanced-Learn
-* XGBoost
-* LightGBM
+* XGBoost / LightGBM
 * TensorFlow
 * Joblib
 * Jupyter Notebook
+* ReportLab
+* Openpyxl
 
 ---
 
@@ -280,12 +267,13 @@ Cada modelo apresenta vantagens específicas → perfeito para testes de ensembl
 * EDA completo
 * Pipeline de pré-processamento
 * SMOTE
-* Treinamento de **5 modelos**
-* Comparação completa
+* Treinamento e comparação de **5 modelos**
+* Geração de métricas e gráficos
 
 ### ➡ Próxima Etapa
 
-* Tuning + API
-* Escolha do modelo final para produção
+* Tuning
+* API
+* Modelo final para produção
 
 ---
