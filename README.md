@@ -3,7 +3,7 @@
 ### Previsão de transações bancárias fraudulentas usando aprendizado de máquina
 
 Este projeto implementa um pipeline completo para **detecção de fraudes em cartões de crédito**, utilizando o dataset real *Credit Card Fraud Detection* do Kaggle.
-O objetivo é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário — passando por EDA, pré-processamento, modelagem, tuning e geração automática de relatórios.
+O objetivo é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário — passando por EDA, pré-processamento, modelagem, tuning, relatórios automáticos e agora **infraestrutura inicial de produção**.
 
 ---
 
@@ -12,12 +12,12 @@ O objetivo é construir um sistema escalável, interpretável e aplicável a cen
 **Fonte:** Kaggle — *Credit Card Fraud Detection*
 Link: [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud)
 
-### **Características principais**
+### Características
 
 * 284.807 transações
 * Apenas **0,17%** são fraudes
 * Features **V1–V28** geradas via PCA
-* Alvo:
+* `Class`:
 
   * `0` → legítima
   * `1` → fraudulenta
@@ -26,23 +26,23 @@ Link: [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kagg
 
 # 🔍 Exploratory Data Analysis (EDA)
 
-✔ Fraudes < 1% (dataset extremamente desbalanceado)
-✔ PCA cria componentes informativos → V17, V14, V12 se destacam
-✔ `Amount` com cauda longa
+✔ Fraudes < 1%
+✔ PCA destaca V17, V14 e V12
+✔ `Amount` muito assimétrica
+✔ Gráficos incluíram histogramas, boxplots, correlação
 ✔ Outliers mantidos
-✔ Gráficos: histogramas, boxplots, countplot, correlação
 
 ---
 
 # 🧹 Pré-processamento
 
-Pipeline em **`src/preprocessing.py`**, contendo:
+Pipeline implementado em `src/preprocessing.py`:
 
-1. Separação X / y
-2. Train-test split 80/20 estratificado
+1. Separação X/y
+2. Train-test split estratificado
 3. Normalização (StandardScaler)
-4. Balanceamento com SMOTE
-5. Salvamento dos arrays processados
+4. Balanceamento SMOTE
+5. Salvamento dos arrays pré-processados
 
 Arquivos gerados:
 
@@ -54,13 +54,17 @@ data/processed/
   ├── y_test.npy
 ```
 
-Scaler salvo em `models/scaler.pkl`.
+Scaler salvo em:
+
+```
+models/scaler.pkl
+```
 
 ---
 
 # 🤖 Modelagem — Modelos Base
 
-Foram treinados 5 modelos iniciais:
+Modelos inicialmente treinados sem tuning:
 
 * Logistic Regression
 * Random Forest
@@ -68,91 +72,22 @@ Foram treinados 5 modelos iniciais:
 * XGBoost
 * LightGBM
 
-Com métricas avaliadas em ROC-AUC, Recall, Precision e matriz de confusão.
+---
 
-(Se desejar manter a seção antiga com resultados *antes* do tuning, deixe como está.)
+# ⚙️ Dia 8 — Tuning de Hiperparâmetros (NOVO)
+
+Cada modelo foi otimizado com RandomizedSearchCV.
+Objetivos:
+
+✔ Reduzir custo computacional
+✔ Aumentar ROC-AUC
+✔ Melhorar recall e precisão sem overfit
+
+Funções em: `src/tuning.py`
 
 ---
 
-# ⚙️ Tuning de Hiperparâmetros (NOVO — Dia 8)
-
-Nesta etapa, cada modelo foi **otimizado individualmente** usando `RandomizedSearchCV`, sempre com foco em:
-
-✔ Maximizar **ROC-AUC**
-✔ Manter execução leve para evitar sobreaquecimento
-✔ Reduzir busca para estabilidade e performance
-
-Funções de tuning implementadas em:
-**`src/tuning.py`**
-
-Modelos tunados:
-
-### **1. Logistic Regression (Tuned)**
-
-* Ajuste de `C`, `penalty`, `solver`
-* Resultado:
-
-  * ROC-AUC: **0.9755**
-  * Precision: **0.8235**
-  * Recall: **0.5714**
-
-→ Modelo mais conservador após tuning (alta precisão, recall menor).
-
----
-
-### **2. Random Forest (Tuned)**
-
-* Ajuste de número de árvores, profundidade, min_samples, max_features
-* Resultado:
-
-  * ROC-AUC: **0.9652**
-  * Recall: **0.7959**
-  * Precision: **0.8764**
-
-→ Modelo mais equilibrado e robusto.
-
----
-
-### **3. Gradient Boosting (Tuned)**
-
-* Ajuste de `n_estimators`, `max_depth`, `learning_rate`, `subsample`
-* Resultado:
-
-  * ROC-AUC: **0.9129**
-  * Precision: **0.7604**
-  * Recall: **0.7449**
-
-→ Performance reduziu por conta da amostra reduzida (esperado).
-
----
-
-### **4. XGBoost (Tuned)**
-
-* Ajuste de `eta`, `subsample`, `colsample_bytree`, `max_depth`
-* (Inclui early stopping automático)
-
-Resultado:
-
-* ROC-AUC: **0.9758** *(melhor do tuning)*
-* Precision: **0.8947**
-* Recall: **0.6939**
-
-→ Melhor modelo em AUC + precisão.
-
----
-
-### **5. LightGBM (Tuned)**
-
-* Ajuste de `learning_rate`, `n_estimators`, profundidade, leaves
-* Resultado:
-
-  * ROC-AUC: **0.5480**
-
-→ Não performou bem com dataset reduzido (comportamento esperado).
-
----
-
-# 🏆 Comparação — Modelos Tunados
+# 🏆 Resultados — Modelos Tunados
 
 | Modelo                      | ROC-AUC | Recall | Precision |
 | --------------------------- | ------- | ------ | --------- |
@@ -162,87 +97,182 @@ Resultado:
 | XGBoost (Tuned)             | 0.9758  | 0.6939 | 0.8947    |
 | LightGBM (Tuned)            | 0.5480  | 0.1735 | 0.0829    |
 
-## ✔ Conclusões do Tuning (Dia 8)
+### Conclusões do Tuning
 
 * **Melhor modelo geral:** XGBoost (Tuned)
-* **Melhor modelo equilibrado:** Random Forest (Tuned)
-* **Mais conservador (alta precisão):** Logistic Regression (Tuned)
-* **Modelo que falhou com amostra reduzida:** LightGBM (Tuned)
+* **Mais equilibrado:** Random Forest (Tuned)
+* **Maior precisão:** XGBoost (Tuned)
+* **Modelo com pior impacto de amostra reduzida:** LightGBM
 
 ---
 
-# 📄 Relatório PDF Automático — (NOVO)
+# 📄 Relatório PDF Automático (NOVO)
 
-Agora o projeto gera automaticamente:
-
-✔ Tabela completa de métricas
-✔ Gráficos dos modelos
-✔ Conclusão automática (melhor AUC, recall, precisão)
-✔ PDF final em:
+Gerado automaticamente pelo código:
 
 ```
 reports/model_report.pdf
 ```
 
-Implementado em **`src/reporting.py`**.
+Inclui:
+
+✔ Tabela de métricas
+✔ Gráficos de ROC-AUC, Recall e Precision
+✔ Conclusões automáticas
+✔ Melhor modelo destacado
+
+Implementação em: `src/reporting.py`.
 
 ---
 
-# 🔮 Próximas Etapas
+# 🧠 Dia 9 — Preparação para Produção (NOVO)
 
-### 💡 Machine Learning Avançado
+Nesta etapa o projeto deixa de ser apenas um pipeline offline e passa a ter **estrutura de produção real**.
 
-* Threshold tuning
-* Grid Search / Optuna
-* Ensemble (Stacking)
+## ✔ Seleção automática do modelo final
 
-### 🧠 Deep Learning
+Criado em `src/modeling.py`:
 
-* MLP
-* BatchNorm + Dropout
-* Early Stopping
+* Combina AUC, Recall e Precision em um **score composto**
+* Retorna automaticamente:
 
-### 🚀 Deploy
+  * nome do melhor modelo
+  * caminho do arquivo .pkl
+  * score final
 
-* Pipeline de produção
-* API com FastAPI
-* Endpoint `/predict`
-* Versionamento de modelos
+O modelo selecionado é salvo como:
 
----
-
-# ⚙ Tecnologias Utilizadas
-
-* Python 3.10+
-* Pandas / NumPy
-* Matplotlib / Seaborn
-* Scikit-learn
-* Imbalanced-Learn
-* XGBoost
-* LightGBM
-* TensorFlow
-* Joblib
-* Openpyxl
-* ReportLab
+```
+models/modelo_final.pkl
+```
 
 ---
 
-# 📌 Status Atual
+# 🧪 Funções de Inferência (NOVO)
+
+Criado o módulo:
+
+```
+src/inference.py
+```
+
+Contém:
+
+### ✔ `predict_single_transaction()`
+
+Recebe um dicionário → retorna:
+
+* probabilidade de fraude
+* classe prevista
+
+### ✔ `predict_batch()`
+
+Recebe um DataFrame → retorna lista de previsões.
+
+### ✔ `predict_pipeline()`
+
+Pipeline real usado em produção:
+
+* carrega scaler e modelo
+* ordena features
+* aplica normalização
+* roda predição
+* retorna saída padronizada
+
+---
+
+# 🚀 API com FastAPI (NOVO — Dia 9)
+
+Criada a estrutura inicial em:
+
+```
+api/app.py
+```
+
+### Endpoints disponíveis:
+
+#### ✔ `GET /`
+
+Teste simples da API.
+
+#### ✔ `POST /predict`
+
+Recebe uma transação
+Retorna:
+
+```json
+{
+  "fraud_probability": 0.87,
+  "prediction": 1
+}
+```
+
+#### ✔ `POST /predict-batch`
+
+Recebe lista de transações
+Retorna previsões em lote.
+
+### Carregamento automático
+
+Ao iniciar a API:
+
+✔ modelo_final.pkl
+✔ scaler.pkl
+✔ feature_order.json
+
+são carregados automaticamente.
+
+---
+
+# 🧩 Estrutura Atualizada do Projeto
+
+```
+/api
+   ├── app.py
+   ├── client.py
+/src
+   ├── preprocessing.py
+   ├── modeling.py
+   ├── tuning.py
+   ├── inference.py
+   ├── reporting.py
+/models
+   ├── modelo_final.pkl
+   ├── scaler.pkl
+   ├── feature_order.json
+/reports
+   ├── model_report.pdf
+```
+
+---
+
+# 📌 Status Atual (Atualizado até Dia 9)
 
 ### ✔ Concluído
 
-* EDA
-* Pipeline completo
-* Balanceamento com SMOTE
-* Treinamento de 5 modelos
-* Tuning de 5 modelos
-* Relatório PDF final
-* Comparação automatizada
-
-### ➡ Próxima etapa
-
-* Seleção do modelo final
-* API com FastAPI
-* Threshold tuning
+✓ EDA completo
+✓ Pré-processamento + SMOTE
+✓ Treinamento de 5 modelos
+✓ Tuning de 5 modelos
+✓ Avaliação comparativa
+✓ Gráficos automatizados
+✓ Relatório PDF
+✓ Seleção automática do melhor modelo
+✓ Criação completa da API (predict e batch)
+✓ Pipeline real de inferência
+✓ Modelo final salvo
 
 ---
+
+# 🔮 Próximas Etapas 
+
+* Ajuste fino do threshold
+* Stacking/Ensemble avançado
+* Persistência de logs
+* Deploy na nuvem (Railway / Render / AWS)
+* Monitoramento de drift
+* Interface web simples (Streamlit)
+* Dockerização
+
+---
+

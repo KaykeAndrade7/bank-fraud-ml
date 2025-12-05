@@ -85,13 +85,48 @@ def build_metrics_dataframe(results: dict):
 
     return df
 
+def select_best_model(df_tuned):
+
+    peso_auc = 0.5
+    peso_recall = 0.3
+    peso_precision = 0.2
+
+    # Criar score composto
+    df_tuned["composite_score"] = (
+        df_tuned["roc_auc"] * peso_auc +
+        df_tuned["recall"] * peso_recall +
+        df_tuned["precision"] * peso_precision
+    )
+
+    # Identificar a linha com melhor modelo
+    best_row = df_tuned.loc[df_tuned["composite_score"].idxmax()]
+    best_model_name = best_row["model"]
+
+    # Mapeamento nome → arquivo .pkl
+    mapping = {
+        "Logistic Regression (Tuned)": "models/logistic_regression_tuned.pkl",
+        "Random Forest (Tuned)": "models/random_forest_tuned.pkl",
+        "Gradient Boosting (Tuned)": "models/gradient_boosting_tuned.pkl",
+        "XGBoost (Tuned)": "models/xgboost_tuned.pkl",
+        "LightGBM (Tuned)": "models/lightgbm_tuned.pkl"
+    }
+
+    best_model_path = mapping[best_model_name]
+
+    return {
+        "best_model_name": best_model_name,
+        "best_model_path": best_model_path,
+        "best_model_score": best_row["composite_score"]
+    }
+
+
 
 def plot_model_metrics(df):
     os.makedirs("reports/plots", exist_ok=True)
     metrics = ['roc_auc', 'recall', 'precision']
     for metric in metrics:
         plt.figure(figsize=(12, 6))
-        sns.barplot(x=df.index, y=df[metric])
+        sns.barplot(x=df.index.tolist(), y=df[metric])
         plt.xlabel("Modelo")
         plt.ylabel(metric.upper())
         plt.title(f"{metric.upper()} — Comparação entre Modelos")

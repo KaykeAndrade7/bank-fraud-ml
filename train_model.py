@@ -10,7 +10,8 @@ from src.modeling import (
     load_processed_data,
     save_model,
     build_metrics_dataframe,
-    plot_model_metrics
+    plot_model_metrics,
+    select_best_model
 )
 
 
@@ -89,6 +90,10 @@ def main():
 
     # Gerar relatórios PDF
     generate_pdf_report(df_tuned)
+
+    # Mostrar o melhor modelo
+    select_best_model(df_tuned)
+        
 
 if __name__ == "__main__":
     main()

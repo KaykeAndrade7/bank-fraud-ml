@@ -7,17 +7,11 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 
 
-# ============================================================
-# Helper para reduzir o dataset (evita superaquecimento)
-# ============================================================
 def subsample_data(X_train, y_train, frac=0.1):
     size = int(len(X_train) * frac)
     return X_train[:size], y_train[:size]
 
 
-# ============================================================
-# 1. Logistic Regression Tuning
-# ============================================================
 def tune_logistic_regression(X_train, y_train, X_test, y_test):
 
     X_small, y_small = subsample_data(X_train, y_train)
@@ -63,9 +57,6 @@ def tune_logistic_regression(X_train, y_train, X_test, y_test):
     }
 
 
-# ============================================================
-# 2. Random Forest Tuning
-# ============================================================
 def tune_random_forest(X_train, y_train, X_test, y_test):
 
     X_small, y_small = subsample_data(X_train, y_train)
@@ -116,9 +107,6 @@ def tune_random_forest(X_train, y_train, X_test, y_test):
     }
 
 
-# ============================================================
-# 3. Gradient Boosting Tuning
-# ============================================================
 def tune_gradient_boosting(X_train, y_train, X_test, y_test):
 
     X_small, y_small = subsample_data(X_train, y_train)
@@ -165,9 +153,6 @@ def tune_gradient_boosting(X_train, y_train, X_test, y_test):
     }
 
 
-# ============================================================
-# 4. XGBoost Tuning
-# ============================================================
 def tune_XGboost(X_train, y_train, X_test, y_test):
 
     X_small, y_small = subsample_data(X_train, y_train)
@@ -221,9 +206,6 @@ def tune_XGboost(X_train, y_train, X_test, y_test):
     }
 
 
-# ============================================================
-# 5. LightGBM Tuning
-# ============================================================
 def tune_LightGBM(X_train, y_train, X_test, y_test):
 
     X_small, y_small = subsample_data(X_train, y_train)
