@@ -24,7 +24,7 @@ class FraudClient:
     
     # Previsao em pacote 
     def predict_batch(self, transaction: list[dict]):
-        url = f'{self.base_url}/predict-bash'
+        url = f'{self.base_url}/predict-batch'
         response = requests.post(url, json=transaction)
 
         if response.status_code != 200:

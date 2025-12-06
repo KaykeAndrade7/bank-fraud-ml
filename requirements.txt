@@ -10,3 +10,5 @@ xgboost
 lightgbm
 reportlab
 openpyxl
+uvicorn
+joblib

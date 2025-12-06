@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import os
 import joblib
+import json
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from imblearn.over_sampling import SMOTE
@@ -68,6 +69,11 @@ def preprocess_pipeline():
     # 2 — Separar X e y
     X = df.drop("Class", axis=1)
     y = df["Class"]
+    feature_order = X.columns.tolist()
+    os.makedirs("models", exist_ok=True)
+
+    with open("models/feature_order.json", "w") as f:
+        json.dump(feature_order, f, indent=4)
     print("✔ X e y separados")
 
     # 3 — Dividir em treino/teste (NOME DA FUNÇÃO CORRIGIDO)

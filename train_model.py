@@ -1,3 +1,5 @@
+import joblib
+import shutil
 from src.reporting import generate_pdf_report
 from src.tuning import (
     tune_logistic_regression,
@@ -92,7 +94,18 @@ def main():
     generate_pdf_report(df_tuned)
 
     # Mostrar o melhor modelo
-    select_best_model(df_tuned)
+    best_model_info = select_best_model(df_tuned)
+    print("\n🏆 Melhor modelo selecionado:")
+    print(best_model_info)
+
+# Copiar modelo vencedor para modelo_final.pkl
+    shutil.copy(
+        best_model_info["best_model_path"],
+        "models/modelo_final.pkl"
+    )
+
+    print("✅ Modelo final salvo em models/modelo_final.pkl")
+
         
 
 if __name__ == "__main__":

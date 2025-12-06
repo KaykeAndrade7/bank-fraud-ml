@@ -2,6 +2,7 @@ import joblib
 import numpy as np
 import pandas as pd
 import json
+from src.modeling import select_best_model
 
 # Variáveis globais (carregadas no startup)
 model_final = None

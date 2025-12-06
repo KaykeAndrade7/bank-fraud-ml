@@ -1,9 +1,52 @@
-# 🏦 Credit Fraud Detection — Machine Learning
+# 🏦 Bank Fraud Detection — End-to-End Machine Learning Project
 
-### Previsão de transações bancárias fraudulentas usando aprendizado de máquina
+Este projeto implementa um **sistema completo de detecção de fraude em transações financeiras**, cobrindo **todo o ciclo de vida de um modelo de Machine Learning**, desde a exploração dos dados até a disponibilização do modelo em produção via **API REST com FastAPI**.
 
-Este projeto implementa um pipeline completo para **detecção de fraudes em cartões de crédito**, utilizando o dataset real *Credit Card Fraud Detection* do Kaggle.
-O objetivo é construir um sistema escalável, interpretável e aplicável a cenários reais do setor bancário — passando por EDA, pré-processamento, modelagem, tuning, relatórios automáticos e agora **infraestrutura inicial de produção**.
+O foco é demonstrar **boas práticas de Data Science e Machine Learning Engineering**, incluindo treinamento, tuning, avaliação, versionamento de modelos e inferência em tempo real e em lote.
+
+---
+
+## 📌 Objetivo do Projeto
+
+Detectar transações fraudulentas de cartão de crédito a partir de dados históricos anonimizados, utilizando modelos de Machine Learning supervisionados e disponibilizando as previsões por meio de uma API.
+
+---
+
+## 🗂️ Estrutura do Projeto
+
+```
+bank-fraud-ml/
+│
+├── api/                    # API FastAPI e client de consumo
+│   ├── app.py
+│   ├── client.py
+│
+├── data/
+│   ├── raw/               # Dados brutos
+│   └── processed/         # Dados processados (numpy arrays)
+│
+├── models/                # Modelos treinados, scaler e artefatos
+│
+├── notebooks/
+│   └── 01_data_exploracao.ipynb
+│
+├── reports/               # Métricas, plots e relatório PDF
+│
+├── src/                   # Código principal de ML
+│   ├── preprocessing.py
+│   ├── modeling.py
+│   ├── tuning.py
+│   ├── inference.py
+│   └── reporting.py
+│
+├── tests/                 # Testes de consumo da API
+│   └── test_client.py
+│
+├── train_model.py         # Pipeline completo de treinamento
+├── requirements.txt
+├── README.md
+└── .gitignore
+```
 
 ---
 
@@ -24,255 +67,200 @@ Link: [https://www.kaggle.com/datasets/mlg-ulb/creditcardfraud](https://www.kagg
 
 ---
 
-# 🔍 Exploratory Data Analysis (EDA)
+## ⚙️ Pipeline de Machine Learning
 
-✔ Fraudes < 1%
-✔ PCA destaca V17, V14 e V12
-✔ `Amount` muito assimétrica
-✔ Gráficos incluíram histogramas, boxplots, correlação
-✔ Outliers mantidos
+1. **Pré-processamento**
 
----
+   * Escalonamento das features
+   * Separação treino/teste
+   * Balanceamento do conjunto de treino
 
-# 🧹 Pré-processamento
+2. **Modelos Treinados**
 
-Pipeline implementado em `src/preprocessing.py`:
+   * Logistic Regression
+   * Random Forest
+   * Gradient Boosting
+   * XGBoost
+   * LightGBM
 
-1. Separação X/y
-2. Train-test split estratificado
-3. Normalização (StandardScaler)
-4. Balanceamento SMOTE
-5. Salvamento dos arrays pré-processados
+3. **Tuning de Hiperparâmetros**
 
-Arquivos gerados:
+   * Ajuste individual por modelo
+   * Avaliação com métricas focadas em fraude
 
-```
-data/processed/
-  ├── X_train_bal.npy
-  ├── X_test.npy
-  ├── y_train_bal.npy
-  ├── y_test.npy
-```
+4. **Avaliação e Comparação**
 
-Scaler salvo em:
+   * ROC-AUC
+   * Recall
+   * Precision
+   * Matriz de confusão
 
-```
-models/scaler.pkl
-```
+5. **Seleção Automática do Melhor Modelo**
 
----
+   * Score composto:
 
-# 🤖 Modelagem — Modelos Base
+     * ROC-AUC (50%)
+     * Recall (30%)
+     * Precision (20%)
 
-Modelos inicialmente treinados sem tuning:
+6. **Persistência de Artefatos**
 
-* Logistic Regression
-* Random Forest
-* Gradient Boosting
-* XGBoost
-* LightGBM
+   * Modelo final
+   * Scaler
+   * Ordem das features
 
 ---
 
-# ⚙️ Dia 8 — Tuning de Hiperparâmetros (NOVO)
+## 📈 Relatórios
 
-Cada modelo foi otimizado com RandomizedSearchCV.
-Objetivos:
+O projeto gera automaticamente:
 
-✔ Reduzir custo computacional
-✔ Aumentar ROC-AUC
-✔ Melhorar recall e precisão sem overfit
+* Tabela comparativa de métricas (`.csv` e `.xlsx`)
+* Gráficos de comparação entre modelos
+* Relatório final em **PDF**
 
-Funções em: `src/tuning.py`
-
----
-
-# 🏆 Resultados — Modelos Tunados
-
-| Modelo                      | ROC-AUC | Recall | Precision |
-| --------------------------- | ------- | ------ | --------- |
-| Logistic Regression (Tuned) | 0.9755  | 0.5714 | 0.8235    |
-| Random Forest (Tuned)       | 0.9652  | 0.7959 | 0.8764    |
-| Gradient Boosting (Tuned)   | 0.9129  | 0.7449 | 0.7604    |
-| XGBoost (Tuned)             | 0.9758  | 0.6939 | 0.8947    |
-| LightGBM (Tuned)            | 0.5480  | 0.1735 | 0.0829    |
-
-### Conclusões do Tuning
-
-* **Melhor modelo geral:** XGBoost (Tuned)
-* **Mais equilibrado:** Random Forest (Tuned)
-* **Maior precisão:** XGBoost (Tuned)
-* **Modelo com pior impacto de amostra reduzida:** LightGBM
+📁 Pasta: `reports/`
 
 ---
 
-# 📄 Relatório PDF Automático (NOVO)
+## 🚀 API — FastAPI
 
-Gerado automaticamente pelo código:
+A API disponibiliza o modelo final para inferência.
+
+### Iniciar a API
+
+```bash
+uvicorn api.app:app --reload
+```
+
+📍 Endpoint base:
 
 ```
-reports/model_report.pdf
-```
-
-Inclui:
-
-✔ Tabela de métricas
-✔ Gráficos de ROC-AUC, Recall e Precision
-✔ Conclusões automáticas
-✔ Melhor modelo destacado
-
-Implementação em: `src/reporting.py`.
-
----
-
-# 🧠 Dia 9 — Preparação para Produção (NOVO)
-
-Nesta etapa o projeto deixa de ser apenas um pipeline offline e passa a ter **estrutura de produção real**.
-
-## ✔ Seleção automática do modelo final
-
-Criado em `src/modeling.py`:
-
-* Combina AUC, Recall e Precision em um **score composto**
-* Retorna automaticamente:
-
-  * nome do melhor modelo
-  * caminho do arquivo .pkl
-  * score final
-
-O modelo selecionado é salvo como:
-
-```
-models/modelo_final.pkl
+http://127.0.0.1:8000
 ```
 
 ---
 
-# 🧪 Funções de Inferência (NOVO)
+### 🔍 Healthcheck
 
-Criado o módulo:
-
-```
-src/inference.py
+```http
+GET /
 ```
 
-Contém:
-
-### ✔ `predict_single_transaction()`
-
-Recebe um dicionário → retorna:
-
-* probabilidade de fraude
-* classe prevista
-
-### ✔ `predict_batch()`
-
-Recebe um DataFrame → retorna lista de previsões.
-
-### ✔ `predict_pipeline()`
-
-Pipeline real usado em produção:
-
-* carrega scaler e modelo
-* ordena features
-* aplica normalização
-* roda predição
-* retorna saída padronizada
-
----
-
-# 🚀 API com FastAPI (NOVO — Dia 9)
-
-Criada a estrutura inicial em:
-
-```
-api/app.py
-```
-
-### Endpoints disponíveis:
-
-#### ✔ `GET /`
-
-Teste simples da API.
-
-#### ✔ `POST /predict`
-
-Recebe uma transação
-Retorna:
+Resposta:
 
 ```json
 {
-  "fraud_probability": 0.87,
+  "message": "Credit Fraud Detection API funcionando!"
+}
+```
+
+---
+
+### 🔮 Previsão Individual
+
+```http
+POST /predict
+```
+
+Exemplo de requisição:
+
+```json
+{
+  "Time": 1000,
+  "V1": -1.2,
+  "V2": 0.4,
+  "...": "...",
+  "V28": -0.6,
+  "Amount": 120.55
+}
+```
+
+Resposta:
+
+```json
+{
+  "fraud_probability": 0.91,
   "prediction": 1
 }
 ```
 
-#### ✔ `POST /predict-batch`
+---
 
-Recebe lista de transações
-Retorna previsões em lote.
+### 📦 Previsão em Lote
 
-### Carregamento automático
+```http
+POST /predict-batch
+```
 
-Ao iniciar a API:
-
-✔ modelo_final.pkl
-✔ scaler.pkl
-✔ feature_order.json
-
-são carregados automaticamente.
+Envia múltiplas transações em uma única requisição.
 
 ---
 
-# 🧩 Estrutura Atualizada do Projeto
+## 🧪 Client Python
+
+O projeto inclui um **client Python** para consumo da API.
+
+Exemplo:
+
+```python
+from api.client import FraudClient
+
+client = FraudClient("http://127.0.0.1:8000")
+
+client.healthcheck()
+client.predict_single(transaction)
+client.predict_batch(transactions)
+```
+
+Testes disponíveis em:
 
 ```
-/api
-   ├── app.py
-   ├── client.py
-/src
-   ├── preprocessing.py
-   ├── modeling.py
-   ├── tuning.py
-   ├── inference.py
-   ├── reporting.py
-/models
-   ├── modelo_final.pkl
-   ├── scaler.pkl
-   ├── feature_order.json
-/reports
-   ├── model_report.pdf
+tests/test_client.py
 ```
 
 ---
 
-# 📌 Status Atual (Atualizado até Dia 9)
+## 🛠️ Tecnologias Utilizadas
 
-### ✔ Concluído
-
-✓ EDA completo
-✓ Pré-processamento + SMOTE
-✓ Treinamento de 5 modelos
-✓ Tuning de 5 modelos
-✓ Avaliação comparativa
-✓ Gráficos automatizados
-✓ Relatório PDF
-✓ Seleção automática do melhor modelo
-✓ Criação completa da API (predict e batch)
-✓ Pipeline real de inferência
-✓ Modelo final salvo
+* Python
+* Pandas / NumPy
+* Scikit-Learn
+* XGBoost
+* LightGBM
+* FastAPI
+* Uvicorn
+* Matplotlib / Seaborn
+* Joblib
 
 ---
 
-# 🔮 Próximas Etapas 
+## ✅ Principais Diferenciais
 
-* Ajuste fino do threshold
-* Stacking/Ensemble avançado
-* Persistência de logs
-* Deploy na nuvem (Railway / Render / AWS)
+* Pipeline **end-to-end**
+* Seleção automática do melhor modelo
+* API pronta para produção
+* Inferência individual e batch
+* Client Python para consumo
+* Relatórios automatizados
+* Estrutura modular e escalável
+
+---
+
+## 🔮 Próximos Passos (Possíveis Extensões)
+
+* Deploy em cloud (Render, AWS, GCP)
 * Monitoramento de drift
-* Interface web simples (Streamlit)
-* Dockerização
+* Threshold dinâmico para fraude
+* Autenticação na API
+* Containerização com Docker
 
 ---
 
+## 👤 Autor
+
+**Kayke Andrade**
+Estudante de Sistemas de Informação
+Interesses: Python, Machine Learning, IA e Backend
+
+---
